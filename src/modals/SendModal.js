@@ -18,6 +18,7 @@ import { modalClose } from '../reducers/_modal';
 import {
   sendModalInit,
   sendUpdateGasPrice,
+  sendAllTransactions,
   sendTransaction,
   sendClearFields,
   sendUpdateRecipient,
@@ -265,10 +266,17 @@ const StyledActions = styled.div`
   }
 `;
 
+const StyledSendAllTokensButton = styled.a`
+  font-size: 11px;
+  float: right;
+  display: inline-block;
+`;
+
 class SendModal extends Component {
   state = {
     isValidAddress: true,
     showQRCodeReader: false,
+    showSendAllForm: false,
   };
 
   componentDidMount() {
@@ -313,6 +321,16 @@ class SendModal extends Component {
           true,
         );
         return;
+
+      } else if (this.state.showSendAllForm) {
+        console.log('Send all');
+        // Check for insufficient funds / sum everything up
+
+        // this.props.sendTransaction(); for each
+        this.props.sendAllTransactions();
+
+        return
+
       } else if (this.props.selected.symbol === 'ETH') {
         const ethereum = this.props.accountInfo.assets.filter(
           asset => asset.symbol === 'ETH',
@@ -375,6 +393,11 @@ class SendModal extends Component {
   // QR Code Reader Handlers
   toggleQRCodeReader = () =>
     this.setState({ showQRCodeReader: !this.state.showQRCodeReader });
+
+  toggleSendAllForm = () => {
+    this.setState({ showSendAllForm: !this.state.showSendAllForm });
+  }
+
   onQRCodeValidate = rawData => {
     const data = rawData.match(/0x\w{40}/g)
       ? rawData.match(/0x\w{40}/g)[0]
@@ -416,11 +439,27 @@ class SendModal extends Component {
               </StyledSubTitle>
 
               <div>
-                <DropdownAsset
-                  selected={this.props.selected.symbol}
-                  assets={this.props.accountInfo.assets}
-                  onChange={value => this.props.sendUpdateSelected(value)}
-                />
+                <StyledSendAllTokensButton
+                  onClick={this.toggleSendAllForm}
+                >
+                  {!this.state.showSendAllForm && (
+                    <span>{lang.t('input.send_all')}</span>
+                  )}
+
+                  {this.state.showSendAllForm && (
+                    <span>{lang.t('input.send_one')}</span>
+                  )}
+                </StyledSendAllTokensButton>
+              </div>
+
+              <div>
+                {!this.state.showSendAllForm && (
+                  <DropdownAsset
+                    selected={this.props.selected.symbol}
+                    assets={this.props.accountInfo.assets}
+                    onChange={value => this.props.sendUpdateSelected(value)}
+                  />
+                )}
               </div>
 
               <StyledFlex>
@@ -448,55 +487,57 @@ class SendModal extends Component {
                 </StyledQRIcon>
               </StyledFlex>
 
-              <StyledFlex>
+              {!this.state.showSendAllForm && (
                 <StyledFlex>
-                  <Input
-                    monospace
-                    label={lang.t('input.asset_amount')}
-                    placeholder="0.0"
-                    type="text"
-                    value={this.props.assetAmount}
-                    onChange={({ target }) =>
-                      this.props.sendUpdateAssetAmount(target.value)
-                    }
-                  />
-                  <StyledMaxBalance onClick={this.onSendMaxBalance}>
-                    {lang.t('modal.send_max')}
-                  </StyledMaxBalance>
-                  <StyledAmountCurrency>
-                    {this.props.selected.symbol}
-                  </StyledAmountCurrency>
+                  <StyledFlex>
+                    <Input
+                      monospace
+                      label={lang.t('input.asset_amount')}
+                      placeholder="0.0"
+                      type="text"
+                      value={this.props.assetAmount}
+                      onChange={({ target }) =>
+                        this.props.sendUpdateAssetAmount(target.value)
+                      }
+                    />
+                    <StyledMaxBalance onClick={this.onSendMaxBalance}>
+                      {lang.t('modal.send_max')}
+                    </StyledMaxBalance>
+                    <StyledAmountCurrency>
+                      {this.props.selected.symbol}
+                    </StyledAmountCurrency>
+                  </StyledFlex>
+                  <StyledFlex>
+                    <StyledConversionIcon>
+                      <img src={convertIcon} alt="≈" />
+                    </StyledConversionIcon>
+                  </StyledFlex>
+                  <StyledFlex>
+                    <Input
+                      monospace
+                      placeholder="0.0"
+                      type="text"
+                      value={this.props.nativeAmount}
+                      disabled={
+                        !this.props.prices[this.props.nativeCurrency] ||
+                        !this.props.prices[this.props.nativeCurrency][
+                          this.props.selected.symbol
+                        ]
+                      }
+                      onChange={({ target }) =>
+                        this.props.sendUpdateNativeAmount(target.value)
+                      }
+                    />
+                    <StyledAmountCurrency
+                      disabled={!this.props.prices[this.props.selected.symbol]}
+                    >
+                      {this.props.prices && this.props.prices.selected
+                        ? this.props.prices.selected.currency
+                        : ''}
+                    </StyledAmountCurrency>
+                  </StyledFlex>
                 </StyledFlex>
-                <StyledFlex>
-                  <StyledConversionIcon>
-                    <img src={convertIcon} alt="≈" />
-                  </StyledConversionIcon>
-                </StyledFlex>
-                <StyledFlex>
-                  <Input
-                    monospace
-                    placeholder="0.0"
-                    type="text"
-                    value={this.props.nativeAmount}
-                    disabled={
-                      !this.props.prices[this.props.nativeCurrency] ||
-                      !this.props.prices[this.props.nativeCurrency][
-                        this.props.selected.symbol
-                      ]
-                    }
-                    onChange={({ target }) =>
-                      this.props.sendUpdateNativeAmount(target.value)
-                    }
-                  />
-                  <StyledAmountCurrency
-                    disabled={!this.props.prices[this.props.selected.symbol]}
-                  >
-                    {this.props.prices && this.props.prices.selected
-                      ? this.props.prices.selected.currency
-                      : ''}
-                  </StyledAmountCurrency>
-                </StyledFlex>
-              </StyledFlex>
+              )}
 
               <LineBreak
                 color={
@@ -688,6 +729,7 @@ class SendModal extends Component {
 SendModal.propTypes = {
   sendModalInit: PropTypes.func.isRequired,
   sendUpdateGasPrice: PropTypes.func.isRequired,
+  sendAllTransactions: PropTypes.func.isRequired,
   sendTransaction: PropTypes.func.isRequired,
   sendClearFields: PropTypes.func.isRequired,
   sendUpdateRecipient: PropTypes.func.isRequired,
@@ -743,6 +785,7 @@ export default connect(reduxProps, {
   modalClose,
   sendModalInit,
   sendUpdateGasPrice,
+  sendAllTransactions,
   sendTransaction,
   sendClearFields,
   sendUpdateRecipient,
