@@ -11,6 +11,7 @@ import DropdownAsset from '../components/DropdownAsset';
 import Button from '../components/Button';
 import Form from '../components/Form';
 import AccountType from '../components/AccountType';
+import AssetIcon from '../components/AssetIcon';
 import convertIcon from '../assets/convert-icon.svg';
 import arrowUp from '../assets/arrow-up.svg';
 import qrIcon from '../assets/qr-code-bnw.png';
@@ -273,6 +274,44 @@ const StyledSendAllTokensButton = styled.a`
   font-size: 11px;
   float: right;
   display: inline-block;
+  cursor: pointer;
+  text-decoration: underline;
+`;
+
+const StyledSendAllTokensTransferLine = styled.div`
+  display: flex;
+  border-top: 1px solid rgba(${colors.rowDivider});
+  background-color: rgb(${colors.white});
+
+  & div {
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    width: 31%;
+    text-align: right;
+    font-family: ${fonts.family.SFMono};
+    font-size: ${fonts.size.smedium};
+    color: rgba(${colors.darkGrey});
+
+    &:first-child {
+      width: 7%;
+    }
+
+    &:nth-child(2) {
+      text-align: left;
+      font-size: ${fonts.size.medium};
+      font-weight: 500;
+      font-family: ${fonts.family.SFProText};
+    }
+  }
+`;
+
+const StyledSendAllTokensHead = styled.div`
+  text-transform: uppercase;
+  font-family: ${fonts.family.SFProText}!important;
+  font-size: ${fonts.size.small}!important;
+  font-weight: 600!important;
+  color: rgba(${colors.grey})!important;
 `;
 
 class SendModal extends Component {
@@ -462,71 +501,60 @@ class SendModal extends Component {
 
               <div>
                 <StyledSendAllTokensButton onClick={this.toggleSendAllForm}>
-                  <u>
-                    {!this.state.showSendAllForm && (
-                      <span>{lang.t('input.send_all')}</span>
-                    )}
+                  {!this.state.showSendAllForm && (
+                    <span>{lang.t('modal.send_all_tokens_from_wallet')}</span>
+                  )}
 
-                    {this.state.showSendAllForm && (
-                      <span>{lang.t('input.send_one')}</span>
-                    )}
-                  </u>
+                  {this.state.showSendAllForm && (
+                    <span>{lang.t('modal.send_specific_token')}</span>
+                  )}
                 </StyledSendAllTokensButton>
               </div>
 
-              <div>
-                {!this.state.showSendAllForm && (
+              {!this.state.showSendAllForm && (
+                <div>
                   <DropdownAsset
                     selected={this.props.selected.symbol}
                     assets={this.props.accountInfo.assets}
                     onChange={value => this.props.sendUpdateSelected(value)}
                   />
-                )}
-              </div>
+                </div>
+              )}
 
               {this.state.showSendAllForm && (
-                <pre>
+                <div>
+                  <StyledSendAllTokensTransferLine>
+                    <StyledSendAllTokensHead>{lang.t('account.label_asset')}</StyledSendAllTokensHead>
+                    <StyledSendAllTokensHead></StyledSendAllTokensHead>
+                    <StyledSendAllTokensHead>{lang.t('account.label_quantity')}</StyledSendAllTokensHead>
+                    <StyledSendAllTokensHead>{lang.t('account.tx_fee')}</StyledSendAllTokensHead>
+                  </StyledSendAllTokensTransferLine>
                   {this.state.showSendAllForm &&
                     this.state.sendAllGasLimits.map((asset, key) => {
                       return (
-                        <div key={key}>
-                          <small>
-                            ----------------<br />
-                            {asset.asset.name} / Amount:{' '}
-                            {asset.asset.balance.display}
-                            <br />
-                            - Gas Limit: {asset.gasLimit} / Gas Price:{' '}
-                            {this.props.gasPrice.value.amount}
-                            <br />
-                            - {lang.t('modal.tx_fee')}:{' '}
-                            {convertAmountFromBigNumber(
+                        <StyledSendAllTokensTransferLine key={key}>
+                            <div>
+                              <AssetIcon
+                                asset={
+                                  asset.asset.symbol === 'ETH' ? 'ETH' : asset.asset.address
+                                }
+                              />
+                            </div>
+                            <div>
+                              {asset.asset.name}
+                            </div>
+                            <div>{asset.asset.balance.display}</div>
+                            <div>{convertAmountFromBigNumber(
                               multiply(
                                 asset.gasLimit,
                                 this.props.gasPrice.value.amount,
                               ),
                             )}{' '}
-                            ETH<br />
-                          </small>
-                        </div>
+                            ETH</div>
+                        </StyledSendAllTokensTransferLine>
                       );
                     })}
-                  ===============<br />
-                  SUM:{' '}
-                  {this.state.showSendAllForm &&
-                    this.state.sendAllGasLimits.reduce(
-                      (sum, asset) =>
-                        (sum += parseFloat(
-                          convertAmountFromBigNumber(
-                            multiply(
-                              asset.gasLimit,
-                              this.props.gasPrice.value.amount,
-                            ),
-                          ),
-                        )),
-                      0,
-                    )}{' '}
-                  ETH
-                </pre>
+                </div>
               )}
 
               <StyledFlex>
@@ -695,27 +723,46 @@ class SendModal extends Component {
                   </Button>
                   <StyledFees>
                     <strong>{lang.t('modal.tx_fee')}</strong>
-                    <p>{`${
-                      this.props.nativeCurrency !== 'ETH'
-                        ? `${
-                            this.props.gasPrices[this.props.gasPriceOption]
-                              ? this.props.gasPrices[this.props.gasPriceOption]
-                                  .txFee.value.display
-                              : '0.000 ETH'
-                          } ≈ `
-                        : ''
-                    }${
-                      this.props.gasPrices[this.props.gasPriceOption] &&
-                      this.props.gasPrices[this.props.gasPriceOption].txFee
-                        .native
-                        ? this.props.gasPrices[this.props.gasPriceOption].txFee
-                            .native.value.display
-                        : `${
-                            this.props.prices
-                              ? this.props.prices.selected.symbol
-                              : '$'
-                          }0.00`
-                    }`}</p>
+                    {!this.state.showSendAllForm && (
+                      <p>{`${
+                        this.props.nativeCurrency !== 'ETH'
+                          ? `${
+                              this.props.gasPrices[this.props.gasPriceOption]
+                                ? this.props.gasPrices[this.props.gasPriceOption]
+                                    .txFee.value.display
+                                : '0.000 ETH'
+                            } ≈ `
+                          : ''
+                      }${
+                        this.props.gasPrices[this.props.gasPriceOption] &&
+                        this.props.gasPrices[this.props.gasPriceOption].txFee
+                          .native
+                          ? this.props.gasPrices[this.props.gasPriceOption].txFee
+                              .native.value.display
+                          : `${
+                              this.props.prices
+                                ? this.props.prices.selected.symbol
+                                : '$'
+                            }0.00`
+                      }`}</p>
+                    )}
+
+                    {this.state.showSendAllForm && (
+                      <p>
+                        {(this.state.sendAllGasLimits.reduce(
+                          (sum, asset) =>
+                            (sum += parseFloat(
+                              convertAmountFromBigNumber(
+                                multiply(
+                                  asset.gasLimit,
+                                  this.props.gasPrice.value.amount,
+                                ),
+                              ),
+                            )),
+                          0,).toFixed(6))} ETH ≈ {this.props.prices.selected.symbol}-.--
+                      </p>
+                    )}
+
                   </StyledFees>
                   <Button
                     left
