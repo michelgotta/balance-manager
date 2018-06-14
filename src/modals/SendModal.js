@@ -40,9 +40,7 @@ import {
 import { capitalize } from '../helpers/utilities';
 import { fonts, colors } from '../styles';
 
-import {
-  estimateGasLimit,
-} from '../handlers/web3';
+import { estimateGasLimit } from '../handlers/web3';
 
 const StyledSuccessMessage = styled.div`
   width: 100%;
@@ -326,7 +324,6 @@ class SendModal extends Component {
           true,
         );
         return;
-
       } else if (this.state.showSendAllForm) {
         console.log('Send all');
         // Check for insufficient funds / sum everything up
@@ -334,8 +331,7 @@ class SendModal extends Component {
         // this.props.sendTransaction(); for each
         this.props.sendAllTransactions();
 
-        return
-
+        return;
       } else if (this.props.selected.symbol === 'ETH') {
         const ethereum = this.props.accountInfo.assets.filter(
           asset => asset.symbol === 'ETH',
@@ -409,10 +405,13 @@ class SendModal extends Component {
       this.props.accountInfo.assets.forEach(asset => {
         estimateGasLimit({
           asset: asset,
-          address: this.props.address
+          address: this.props.address,
         }).then(gasLimit => {
           this.setState({
-            sendAllGasLimits: [...this.state.sendAllGasLimits, { asset: asset, gasLimit: gasLimit }]
+            sendAllGasLimits: [
+              ...this.state.sendAllGasLimits,
+              { asset: asset, gasLimit: gasLimit },
+            ],
           });
         });
       });
@@ -462,18 +461,16 @@ class SendModal extends Component {
               </StyledSubTitle>
 
               <div>
-                <StyledSendAllTokensButton
-                  onClick={this.toggleSendAllForm}
-                >
-                  <u>{!this.state.showSendAllForm && (
-                    <span>{lang.t('input.send_all')}</span>
-                  )}
+                <StyledSendAllTokensButton onClick={this.toggleSendAllForm}>
+                  <u>
+                    {!this.state.showSendAllForm && (
+                      <span>{lang.t('input.send_all')}</span>
+                    )}
 
-                  {this.state.showSendAllForm && (
-                    <span>{lang.t('input.send_one')}</span>
-                  )}
+                    {this.state.showSendAllForm && (
+                      <span>{lang.t('input.send_one')}</span>
+                    )}
                   </u>
-
                 </StyledSendAllTokensButton>
               </div>
 
@@ -489,24 +486,46 @@ class SendModal extends Component {
 
               {this.state.showSendAllForm && (
                 <pre>
-                  {this.state.showSendAllForm && this.state.sendAllGasLimits.map((asset, key) => {
-                    return (
-                      <div key={key}>
-                        <small>
-                          ----------------<br/>
-                          {asset.asset.name} / Amount: {asset.asset.balance.display}<br/>
-                          - Gas Limit: {asset.gasLimit} / Gas Price: {this.props.gasPrice.value.amount}<br/>
-                          - {lang.t('modal.tx_fee')}: {convertAmountFromBigNumber(multiply(asset.gasLimit, this.props.gasPrice.value.amount))} ETH<br/>
-                        </small>
-                      </div>
-                    )
-                  })}
-
-                  ===============<br/>
-                  SUM: {this.state.showSendAllForm && this.state.sendAllGasLimits.reduce((sum, asset) => (
-                    sum += parseFloat(convertAmountFromBigNumber(multiply(asset.gasLimit, this.props.gasPrice.value.amount)))
-
-                  ), 0)} ETH
+                  {this.state.showSendAllForm &&
+                    this.state.sendAllGasLimits.map((asset, key) => {
+                      return (
+                        <div key={key}>
+                          <small>
+                            ----------------<br />
+                            {asset.asset.name} / Amount:{' '}
+                            {asset.asset.balance.display}
+                            <br />
+                            - Gas Limit: {asset.gasLimit} / Gas Price:{' '}
+                            {this.props.gasPrice.value.amount}
+                            <br />
+                            - {lang.t('modal.tx_fee')}:{' '}
+                            {convertAmountFromBigNumber(
+                              multiply(
+                                asset.gasLimit,
+                                this.props.gasPrice.value.amount,
+                              ),
+                            )}{' '}
+                            ETH<br />
+                          </small>
+                        </div>
+                      );
+                    })}
+                  ===============<br />
+                  SUM:{' '}
+                  {this.state.showSendAllForm &&
+                    this.state.sendAllGasLimits.reduce(
+                      (sum, asset) =>
+                        (sum += parseFloat(
+                          convertAmountFromBigNumber(
+                            multiply(
+                              asset.gasLimit,
+                              this.props.gasPrice.value.amount,
+                            ),
+                          ),
+                        )),
+                      0,
+                    )}{' '}
+                  ETH
                 </pre>
               )}
 

@@ -156,12 +156,7 @@ export const sendUpdateGasPrice = newGasPriceOption => (dispatch, getState) => {
 
 export const sendAllTransactions = () => (dispatch, getState) => {
   dispatch({ type: SEND_TRANSACTION_REQUEST });
-  const {
-    address,
-    recipient,
-    gasPrice,
-    gasLimit
-  } = getState().send;
+  const { address, recipient, gasPrice, gasLimit } = getState().send;
   const { accountType, accountInfo } = getState().account;
 
   accountInfo.assets.forEach(asset => {
@@ -192,7 +187,7 @@ export const sendAllTransactions = () => (dispatch, getState) => {
         dispatch({ type: SEND_TRANSACTION_FAILURE });
       });
   });
-}
+};
 
 export const sendTransaction = () => (dispatch, getState) => {
   dispatch({ type: SEND_TRANSACTION_REQUEST });
