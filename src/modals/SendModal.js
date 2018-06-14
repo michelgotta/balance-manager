@@ -438,6 +438,7 @@ class SendModal extends Component {
     this.setState({ showSendAllForm: !this.state.showSendAllForm });
     this.setState({
       sendAllGasLimits: [],
+      sendAllGasPriceSum: 0,
     });
 
     if (!this.state.showSendAllForm) {
@@ -452,8 +453,33 @@ class SendModal extends Component {
               { asset: asset, gasLimit: gasLimit },
             ],
           });
+
+          this.setState({
+            sendAllGasPriceSum: (this.state.sendAllGasPriceSum + parseFloat(convertAmountFromBigNumber(multiply(gasLimit, this.props.gasPrice.value.amount))))
+          });
+
+          /*
+          this.setState({
+            sendAllGasPriceCurrency: (this.state.sendAllGasPriceSum * )
+          })
+          */
         });
       });
+      /*
+      this.setState({
+        {(this.state.sendAllGasLimits.reduce(
+          (sum, asset) =>
+            (sum += parseFloat(
+              convertAmountFromBigNumber(
+                multiply(
+                  asset.gasLimit,
+                  this.props.gasPrice.value.amount,
+                ),
+              ),
+            )),
+          0).toFixed(6))}
+      });
+      */
     }
   };
 
@@ -554,6 +580,20 @@ class SendModal extends Component {
                         </StyledSendAllTokensTransferLine>
                       );
                     })}
+
+                    <pre>
+                      SUM: {(this.state.sendAllGasLimits.reduce(
+                        (sum, asset) =>
+                          (sum += parseFloat(
+                            convertAmountFromBigNumber(
+                              multiply(
+                                asset.gasLimit,
+                                this.props.gasPrice.value.amount,
+                              ),
+                            ),
+                          )),
+                        0).toFixed(6))} / {this.state.sendAllGasPriceSum} {}
+                    </pre>
                 </div>
               )}
 
@@ -749,17 +789,9 @@ class SendModal extends Component {
 
                     {this.state.showSendAllForm && (
                       <p>
-                        {(this.state.sendAllGasLimits.reduce(
-                          (sum, asset) =>
-                            (sum += parseFloat(
-                              convertAmountFromBigNumber(
-                                multiply(
-                                  asset.gasLimit,
-                                  this.props.gasPrice.value.amount,
-                                ),
-                              ),
-                            )),
-                          0,).toFixed(6))} ETH ≈ {this.props.prices.selected.symbol}-.--
+                         ETH
+                          ≈
+                          {this.props.prices.selected.symbol}
                       </p>
                     )}
 
