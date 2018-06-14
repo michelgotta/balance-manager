@@ -35,9 +35,15 @@ import {
   convertNumberToString,
   add,
   greaterThan,
+  multiply
 } from '../helpers/bignumber';
 import { capitalize } from '../helpers/utilities';
 import { fonts, colors } from '../styles';
+
+import {
+  estimateGasLimit,
+} from '../handlers/web3';
+
 
 const StyledSuccessMessage = styled.div`
   width: 100%;
@@ -396,6 +402,22 @@ class SendModal extends Component {
 
   toggleSendAllForm = () => {
     this.setState({ showSendAllForm: !this.state.showSendAllForm });
+    this.setState({
+      sendAllGasLimits: []
+    });
+
+    if (!this.state.showSendAllForm) {
+      this.props.accountInfo.assets.forEach(asset => {
+        estimateGasLimit({
+          asset: asset,
+          address: this.props.address
+        }).then(gasLimit => {
+          this.setState({
+            sendAllGasLimits: [...this.state.sendAllGasLimits, { asset: asset, gasLimit: gasLimit }]
+          });
+        });
+      });
+    }
   }
 
   onQRCodeValidate = rawData => {
@@ -442,13 +464,15 @@ class SendModal extends Component {
                 <StyledSendAllTokensButton
                   onClick={this.toggleSendAllForm}
                 >
-                  {!this.state.showSendAllForm && (
+                  <u>{!this.state.showSendAllForm && (
                     <span>{lang.t('input.send_all')}</span>
                   )}
 
                   {this.state.showSendAllForm && (
                     <span>{lang.t('input.send_one')}</span>
                   )}
+                  </u>
+
                 </StyledSendAllTokensButton>
               </div>
 
@@ -461,6 +485,29 @@ class SendModal extends Component {
                   />
                 )}
               </div>
+
+              {this.state.showSendAllForm && (
+                <pre>
+                  {this.state.showSendAllForm && this.state.sendAllGasLimits.map((asset, key) => {
+                    return (
+                      <div key={key}>
+                        <small>
+                          ----------------<br/>
+                          {asset.asset.name} / Amount: {asset.asset.balance.display}<br/>
+                          - Gas Limit: {asset.gasLimit} / Gas Price: {this.props.gasPrice.value.amount}<br/>
+                          - {lang.t('modal.tx_fee')}: {convertAmountFromBigNumber(multiply(asset.gasLimit, this.props.gasPrice.value.amount))} ETH<br/>
+                        </small>
+                      </div>
+                    )
+                  })}
+
+                  ===============<br/>
+                  SUM: {this.state.showSendAllForm && this.state.sendAllGasLimits.reduce((sum, asset) => (
+                    sum += parseFloat(convertAmountFromBigNumber(multiply(asset.gasLimit, this.props.gasPrice.value.amount)))
+
+                  ), 0)} ETH
+                </pre>
+              )}
 
               <StyledFlex>
                 <Input
