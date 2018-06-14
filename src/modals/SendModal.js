@@ -35,7 +35,7 @@ import {
   convertNumberToString,
   add,
   greaterThan,
-  multiply
+  multiply,
 } from '../helpers/bignumber';
 import { capitalize } from '../helpers/utilities';
 import { fonts, colors } from '../styles';
@@ -43,7 +43,6 @@ import { fonts, colors } from '../styles';
 import {
   estimateGasLimit,
 } from '../handlers/web3';
-
 
 const StyledSuccessMessage = styled.div`
   width: 100%;
@@ -403,7 +402,7 @@ class SendModal extends Component {
   toggleSendAllForm = () => {
     this.setState({ showSendAllForm: !this.state.showSendAllForm });
     this.setState({
-      sendAllGasLimits: []
+      sendAllGasLimits: [],
     });
 
     if (!this.state.showSendAllForm) {
@@ -418,7 +417,7 @@ class SendModal extends Component {
         });
       });
     }
-  }
+  };
 
   onQRCodeValidate = rawData => {
     const data = rawData.match(/0x\w{40}/g)
@@ -432,10 +431,12 @@ class SendModal extends Component {
       );
     return { data, result, onError };
   };
+
   onQRCodeScan = data => {
     this.props.sendUpdateRecipient(data);
     this.setState({ showQRCodeReader: false });
   };
+
   onQRCodeError = () => {
     this.props.notificationShow(
       lang.t('notification.error.failed_scanning_qr_code'),
