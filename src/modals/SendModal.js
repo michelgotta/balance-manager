@@ -454,32 +454,19 @@ class SendModal extends Component {
             ],
           });
 
-          this.setState({
-            sendAllGasPriceSum: (this.state.sendAllGasPriceSum + parseFloat(convertAmountFromBigNumber(multiply(gasLimit, this.props.gasPrice.value.amount))))
-          });
+          const sendAllGasPriceSum = (this.state.sendAllGasPriceSum + parseFloat(convertAmountFromBigNumber(multiply(gasLimit, this.props.gasPrice.value.amount))));
 
-          /*
+          const selectedCurrency = this.props.prices.selected.currency;
+          const selectedCurrencyETHPrice = this.props.prices[selectedCurrency].ETH.price.amount;
+
+          const sendAllGasPriceSumInSelectedCurrency = convertAmountFromBigNumber(multiply(selectedCurrencyETHPrice, sendAllGasPriceSum));
+
           this.setState({
-            sendAllGasPriceCurrency: (this.state.sendAllGasPriceSum * )
-          })
-          */
+            sendAllGasPriceSum: sendAllGasPriceSum,
+            sendAllGasPriceSumInSelectedCurrency: sendAllGasPriceSumInSelectedCurrency
+          });
         });
       });
-      /*
-      this.setState({
-        {(this.state.sendAllGasLimits.reduce(
-          (sum, asset) =>
-            (sum += parseFloat(
-              convertAmountFromBigNumber(
-                multiply(
-                  asset.gasLimit,
-                  this.props.gasPrice.value.amount,
-                ),
-              ),
-            )),
-          0).toFixed(6))}
-      });
-      */
     }
   };
 
@@ -580,20 +567,6 @@ class SendModal extends Component {
                         </StyledSendAllTokensTransferLine>
                       );
                     })}
-
-                    <pre>
-                      SUM: {(this.state.sendAllGasLimits.reduce(
-                        (sum, asset) =>
-                          (sum += parseFloat(
-                            convertAmountFromBigNumber(
-                              multiply(
-                                asset.gasLimit,
-                                this.props.gasPrice.value.amount,
-                              ),
-                            ),
-                          )),
-                        0).toFixed(6))} / {this.state.sendAllGasPriceSum} {}
-                    </pre>
                 </div>
               )}
 
@@ -789,9 +762,9 @@ class SendModal extends Component {
 
                     {this.state.showSendAllForm && (
                       <p>
-                         ETH
+                         {this.state.sendAllGasPriceSum} ETH
                           ≈
-                          {this.props.prices.selected.symbol}
+                          {this.props.prices.selected.symbol}{this.state.sendAllGasPriceSumInSelectedCurrency}
                       </p>
                     )}
 
